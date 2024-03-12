@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Mar 12 11:11:55 2024
+
+@author: Michael Krieger (lapmk)
+"""
+
+import time
+
+
+def is_float(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+
+class dmm:
+    def __init__(self, name: str, connecteddevice):
+        self.name = name
+        self.device = connecteddevice
+        self.NPLC = 10
+        
+        
+    def get_voltage(self):
+        time.sleep(self.NPLC * 0.02)
+        return self.device.get_voltage()
+        
+        
+    def get_current(self):
+        time.sleep(self.NPLC * 0.02)
+        return self.device.get_current()
+        
+
+    def get_resistance(self):
+        time.sleep(self.NPLC * 0.02)
+        return self.device.get_resistance()
+
+
+    def execute_command(self, command: str, value):
+        command = command.split('.')
+        if command[0] == self.name:
+            if command[1] == 'U':
+                if value == '':
+                    return (True, self.get_voltage())
+                else:
+                    return (False, None)
+            elif command[1] == 'I':
+                if value == '':
+                    return (True, self.get_current())
+                else:
+                    return (False, None)
+            elif command[1] == 'R':
+                if value == '':
+                    return (True, self.get_resistance())
+                else:
+                    return (False, None)
+            else:
+                return (False, None)
+        else:
+            return None
