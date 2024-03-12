@@ -10,8 +10,8 @@ from scipy.constants import k, e
 from scipy.optimize import fsolve
 
 class diode:
-    def __init__(self, I0: float=5.77e-10, Egap: float=1.12, n: float=1., 
-                 Rs:float = 0.1, temperature: float=295):
+    def __init__(self, I0: float=3.40e11, Egap: float=1.12, n: float=2., 
+                 Rs:float = 35, temperature: float=295):
         self.I0 = I0
         self.Egap = Egap
         self.n = n
@@ -22,10 +22,20 @@ class diode:
         
     
     def _calc_current(self, voltage: float, current: float):
-        return (self.I0 * np.exp(-e * self.Egap / k / self.temperature) *
-                (np.exp(e * (voltage - self.Rs * current) / 
-                        k / self.temperature / self.n) - 1))
-    
+        x = (e * (voltage - self.Rs * current) / 
+             k / self.temperature / self.n)
+        if x > 20:
+            return np.exp(np.log(self.I0) -
+                          e * self.Egap / k / self.temperature +
+                          x)
+        elif x > 0:
+            return np.exp(np.log(self.I0) -
+                          e * self.Egap / k / self.temperature +
+                          np.log(np.exp(x) - 1))
+        else:
+            return (self.I0 * np.exp(-e * self.Egap / k / self.temperature) *
+                    (np.exp(x) - 1))
+
         
     def set_temperature(self, temperature: float):
         self.temperature = temperature
@@ -43,15 +53,55 @@ class diode:
         if voltage is None:
             voltage = self.voltage
             
-        func = lambda current: self._calc_current(voltage, current)
-        result = fsolve(func, 0)
-        return result[0]
-    
+        if self.Rs > 0:
+            func = lambda current: (self._calc_current(voltage, current) - 
+                                    current)
+            if voltage < 0:
+                current0 = 0
+            else:
+                current0 = voltage / 2 / self.Rs
+            result = fsolve(func, current0)
+            return result[0]
+        else:
+            return self._calc_current(voltage, 0)
+                
     
     def get_voltage(self, current=None):
         if current is None:
             current = self.current
             
-        func = lambda voltage: self._calc_current(voltage, current)
-        result = fsolve(func, 0)
-        return result[0]
+        return (self.n * k * self.temperature / e * 
+                np.log(1 + current / self.I0 / 
+                       np.exp(-e * self.Egap / k / self.temperature)) +
+                self.Rs * current)
+
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    diode1 = diode()
+    
+    diode1.set_temperature(295)
+    
+    dataU = np.linspace(-2, 4, 101)
+
+    dataI = np.array([])
+    for voltage in dataU:
+        dataI = np.append(dataI, diode1.get_current(voltage))
+
+    dataU2 = np.array([])
+    for current in dataI:
+        dataU2 = np.append(dataU2, diode1.get_voltage(current))
+    
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('Voltage (V)')
+    ax1.set_ylabel('Current (A)', color='g')
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Current (A)', color='b')
+    ax2.set_yscale('log')
+    
+    ax1.plot(dataU, dataI, color='g')
+    mask = (dataI != 0)
+    ax2.plot(dataU[mask], np.abs(dataI[mask]), color='b')
+    
+    
