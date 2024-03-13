@@ -198,30 +198,23 @@ class Demo_Server_Device(Device):
                     item.set_port(self.demo_server_port, self.demo_server_host)
 
         global sandboxes
-        if self.demo_server_port not in sandboxes:
-            sandboxes[f"{self.demo_server_host}_{self.demo_server_port}"] = (
-                SandboxServer(self.demo_server_host, self.demo_server_port)
+        demo_name = f"{self.demo_server_host}_{self.demo_server_port}"
+        if demo_name not in sandboxes:
+            sandboxes[demo_name] = SandboxServer(
+                self.demo_server_host, self.demo_server_port
             )
-        sandboxes[
-            f"{self.demo_server_host}_{self.demo_server_port}"
-        ].add_using_instrument()
+        sandboxes[demo_name].add_using_instrument()
 
     def finalize_steps(self):
         """
         A function to finalize the steps of the device
         """
         global sandboxes
-        if self.demo_server_port in sandboxes:
-            sandboxes[
-                f"{self.demo_server_host}_{self.demo_server_port}"
-            ].remove_using_instrument()
-            if (
-                sandboxes[
-                    f"{self.demo_server_host}_{self.demo_server_port}"
-                ].n_using_instruments
-                == 0
-            ):
-                sandboxes.pop(self.demo_server_port)
+        demo_name = f"{self.demo_server_host}_{self.demo_server_port}"
+        if demo_name in sandboxes:
+            sandboxes[demo_name].remove_using_instrument()
+            if sandboxes[demo_name].n_using_instruments == 0:
+                sandboxes.pop(demo_name)
 
 
 class ServerConnection(Connection_Config):
