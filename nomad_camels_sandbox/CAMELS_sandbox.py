@@ -27,6 +27,9 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
     dmm1 = dmm.dmm("dmm_pt1000", heater1)
     smu2 = smu.smu("smu_diode", diode1)
 
+    def log_message(self, format, *args):
+        return
+
     def do_GET(self):
         global NPLC, U, R
         parsed = urlparse(self.path)
@@ -35,11 +38,11 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
         if len(params) == 0:
             returncode = 200
             returnvalue = "This is SandboxForCAMELS."
-            print("Send hello!")
+            # print("Send hello!")
         elif len(params) == 1:
             command = list(params.keys())[0]
             value = params[command][0]
-            print("Execute: " + command + " = " + value)
+            # print("Execute: " + command + " = " + value)
             returncode = 400
             # Set experiment to current temperature
             SandboxForCAMELS.diode1.set_temperature(
@@ -58,16 +61,16 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
                         if result[1] is not None:
                             returnvalue = str(result[1])
         else:
-            print("Two many commands received; please send only one.")
+            # print("Two many commands received; please send only one.")
             returncode = 400
 
-        if returncode == 200:
-            if returnvalue != "":
-                print("--> " + returnvalue + ", OK")
-            else:
-                print("--> OK")
-        else:
-            print("--> Error")
+        # if returncode == 200:
+        #     if returnvalue != "":
+        #         print("--> " + returnvalue + ", OK")
+        #     else:
+        #         print("--> OK")
+        # else:
+        #     print("--> Error")
 
         self.send_response(returncode)
         self.send_header("Content-type", "text/plain")
