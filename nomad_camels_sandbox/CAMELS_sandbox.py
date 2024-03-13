@@ -13,10 +13,6 @@ import threading
 from .digitaltwins import heater, diode, smu, dmm
 
 
-HOST = "localhost"
-PORT = 8080
-
-
 class SandboxForCAMELS(BaseHTTPRequestHandler):
     # Setup experiment
     heater1 = heater.heater()
