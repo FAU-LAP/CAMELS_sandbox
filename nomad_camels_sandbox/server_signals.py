@@ -224,7 +224,7 @@ class ServerConnection(Connection_Config):
         label_host = QLabel("Host:")
         self.line_edit_host = QLineEdit("localhost")
         label_port = QLabel("Port:")
-        self.line_edit_port = QLineEdit("8080")
+        self.line_edit_port = QLineEdit("8182")
 
         self.layout().addWidget(label_host, 0, 0)
         self.layout().addWidget(self.line_edit_host, 0, 1)
