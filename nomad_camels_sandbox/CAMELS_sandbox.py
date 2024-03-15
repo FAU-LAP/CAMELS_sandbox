@@ -9,14 +9,25 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import threading
+import platform
 
 from .digitaltwins import heater, diode, smu, dmm
 
 
+def is_arm():
+    try:
+        machine_type = platform.machine().lower()
+        if "arm" in machine_type or "aarch" in machine_type:
+            return True
+    except:
+        return False
+
+
 class SandboxForCAMELS(BaseHTTPRequestHandler):
     # Setup experiment
-    heater1 = heater.heater()
-    diode1 = diode.diode()
+    arm = is_arm()
+    heater1 = heater.heater(simplephysics=arm)
+    diode1 = diode.diode(simplephysics=arm)
 
     # Setup instruments
     smu1 = smu.smu("smu_heater", heater1)
@@ -93,8 +104,10 @@ class SandboxServer:
 
     def start(self):
         print("This is SandboxForCAMELS.")
-        print("Server started http://%s:%s" % (self.host, self.port))
-        print("Press Ctrl-C to terminate")
+        print("Local server started http://%s:%s" % (self.host, self.port))
+        if is_arm():
+            print("Running on ARM CPU, using simplified physics")
+        # print("Press Ctrl-C to terminate")
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.start()
 
@@ -102,4 +115,4 @@ class SandboxServer:
         self.server.shutdown()
         self.server_thread.join()  # Wait for the server thread to finish
         self.server.server_close()
-        print("Server stopped.")
+        print("SandboxForCAMELS server stopped.")
