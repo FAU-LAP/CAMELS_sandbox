@@ -39,6 +39,12 @@ class peltierelement:
         return ((temperature_e - temperature_a) / self.theta_m +
                 self.alpha_m * temperature_a * current +
                 (current**2) * self.R_m / 2)
+    
+    
+    def heatpower_coefficients(self, current: float, temperature_e: float):
+        c0 = temperature_e / self.theta_m + (current**2) * self.R_m / 2
+        c1 = self.alpha_m * current - 1 / self.theta_m
+        return (c0, c1)
 
 
     def _init_parameters(self, Th: float, dTmax: float, Umax: float, Imax: float, qamax: float):
