@@ -18,6 +18,7 @@ class diode:
         n: float = 2.0,
         Rs: float = 35,
         temperature: float = 295,
+        simplephysics: bool = False
     ):
         self.I0 = I0
         self.Egap = Egap
@@ -26,6 +27,7 @@ class diode:
         self.temperature = temperature
         self.voltage = 0
         self.current = 0
+        self.simplephysics = simplephysics
 
     def _calc_current(self, voltage: float, current: float):
         x = e * (voltage - self.Rs * current) / k / self.temperature / self.n
@@ -57,7 +59,9 @@ class diode:
         if voltage is None:
             voltage = self.voltage
 
-        if self.Rs > 0:
+        if self.Rs > 0 and not self.simplephysics:
+            # more realistic model including serial resistance:
+            # requires numerical solution of implicit equation
             func = lambda current: (self._calc_current(voltage, current) - current)
             if voltage < 0:
                 current0 = 0
@@ -66,6 +70,9 @@ class diode:
             result = fsolve(func, current0)
             return result[0]
         else:
+            # simple physics:
+            # we neglect the serial resistance and simply calculate
+            # the Shockley equation
             return self._calc_current(voltage, 0)
 
     def get_voltage(self, current=None):

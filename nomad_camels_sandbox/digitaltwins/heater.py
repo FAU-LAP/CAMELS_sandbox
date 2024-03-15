@@ -6,6 +6,7 @@ Created on Mon Mar 11 12:09:31 2024
 """
 
 from datetime import datetime
+import numpy as np
 import scipy.constants as constants
 from scipy import integrate
 from . import peltierelement
@@ -28,12 +29,19 @@ class heater:
     # convection
     heat_transfer_coefficient: float = 10  # W/m^2/K
 
+
     def _calc_convection_heatpower(self, temperature: float):
         return (
             self.heat_transfer_coefficient
             * self.area
             * (self.temperature_environment - temperature)
         )
+    
+    
+    def _calc_convection_heatpower_coefficients(self):
+        c = self.heat_transfer_coefficient * self.area
+        return (c * self.temperature_environment, -c)
+
 
     def _calc_radiation_heatpower(self, temperature: float):
         return (
@@ -42,37 +50,44 @@ class heater:
             * self.area
             * (self.temperature_environment**4 - temperature**4)
         )
-
-    def _calc_total_heatpower(
-        self,
-    ):
-        return (
-            self.tec.heatpower(
-                self.current, self.temperature, self.temperature_environment
-            )
-            + self._calc_convection_heatpower(self.temperature)
-            + self._calc_radiation_heatpower(self.temperature)
-        )
+    
 
     def _calc_temperature_change(self):
         c = self.specific_heat_capacity
         m = self.area * self.thickness * self.density
         Te = self.temperature_environment
         t1 = (datetime.now() - self.lastchange).total_seconds()
-        f = lambda temp, t: (
-            (
-                self.tec.heatpower(self.current, temp, Te)
-                + self._calc_convection_heatpower(temp)
-                + self._calc_radiation_heatpower(temp)
+        if not self.simplephysics:
+            # more realistic model:
+            # involves numerical solution of differential equation
+            f = lambda temp, t: (
+                (
+                    self.tec.heatpower(self.current, temp, Te)
+                    + self._calc_convection_heatpower(temp)
+                    + self._calc_radiation_heatpower(temp)
+                )
+                / c
+                / m
             )
-            / c
-            / m
-        )
-        result = integrate.odeint(f, self.temperatureatchange, [0, t1])
+            result = integrate.odeint(f, self.temperatureatchange, [0, t1])
+            result = result[1, 0]
+        else:
+            # simple physics:
+            # we neglect heat radiation and solve the differential equation
+            # analytically
+            c_tec = self.tec.heatpower_coefficients(self.current, Te)
+            c_conv = self._calc_convection_heatpower_coefficients()
+            a = (c_tec[1] + c_conv[1]) / c / m
+            b = (c_tec[0] + c_conv[0]) / c / m
+            result = ((self.temperatureatchange + b / a) * np.exp(a * t1) 
+                      - b / a)
         return result
+    
 
-    def __init__(self, temperature_environment: float = 295):
+    def __init__(self, temperature_environment: float = 295,
+                 simplephysics: bool = False):
         # init values
+        self.simplephysics = simplephysics
         self.temperature_environment = temperature_environment
         self.temperature = temperature_environment
         self.current = 0
@@ -83,15 +98,17 @@ class heater:
         # init pt1000
         self.pt1000 = ptxxxx.ptxxxx(1000)
 
+
     def set_current(self, current: float = 0):
         self.temperatureatchange = self.get_temperature()
         self.lastchange = datetime.now()
         self.current = current
 
-    def get_temperature(self):
-        deltaT = self._calc_temperature_change()
-        self.temperature = deltaT[1, 0]
+
+    def get_temperature(self):        
+        self.temperature = self._calc_temperature_change()
         return self.temperature
+
 
     def get_resistance(self):
         return self.pt1000.get_resistance(self.get_temperature())
