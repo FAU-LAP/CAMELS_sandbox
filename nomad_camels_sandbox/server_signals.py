@@ -222,7 +222,7 @@ class ServerConnection(Connection_Config):
         super().__init__(parent)
 
         label_host = QLabel("Host:")
-        self.line_edit_host = QLineEdit("localhost")
+        self.line_edit_host = QLineEdit("127.0.0.1")
         label_port = QLabel("Port:")
         self.line_edit_port = QLineEdit("8182")
 
