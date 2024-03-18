@@ -8,27 +8,28 @@ Created on Wed Mar  6 15:03:22 2024
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
-import threading
-import platform
+# import platform
 from PySide6.QtCore import QThread
 
 from .digitaltwins import heater, diode, smu, dmm
 
 
-def is_arm():
-    try:
-        machine_type = platform.machine().lower()
-        if "arm" in machine_type or "aarch" in machine_type:
-            return True
-    except:
-        return False
+# def is_arm():
+#     try:
+#         machine_type = platform.machine().lower()
+#         if "arm" in machine_type or "aarch" in machine_type:
+#             return True
+#     except:
+#         return False
 
 
 class SandboxForCAMELS(BaseHTTPRequestHandler):
     # Setup experiment
-    arm = is_arm()
-    heater1 = heater.heater("heater", simplephysics=arm)
-    diode1 = diode.diode("diode", simplephysics=arm)
+    # arm = is_arm()
+    # heater1 = heater.heater("heater", simplephysics=arm)
+    # diode1 = diode.diode("diode", simplephysics=arm)
+    heater1 = heater.heater("heater")
+    diode1 = diode.diode("diode")
 
     # Setup instruments
     smu1 = smu.smu("smu_heater", heater1)
@@ -98,8 +99,8 @@ class ServerThread(QThread):
     def run(self):
         print("This is SandboxForCAMELS.")
         print("Local server started http://%s:%s" % (self.host, self.port))
-        if is_arm():
-            print("Running on ARM CPU, using simplified physics")
+        # if is_arm():
+        #     print("Running on ARM CPU, using simplified physics")
         self.server.serve_forever()
 
     def stop(self):
