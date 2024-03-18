@@ -84,9 +84,10 @@ class heater:
         return result
     
 
-    def __init__(self, temperature_environment: float = 295,
+    def __init__(self, name: str, temperature_environment: float = 295,
                  simplephysics: bool = False):
         # init values
+        self.name = name
         self.simplephysics = simplephysics
         self.temperature_environment = temperature_environment
         self.temperature = temperature_environment
@@ -112,6 +113,27 @@ class heater:
 
     def get_resistance(self):
         return self.pt1000.get_resistance(self.get_temperature())
+    
+    
+    def execute_command(self, command: str, value):
+        command = command.split(".")
+        if command[0] == self.name:
+            if command[1] == "simplephysics":
+                if value == "":
+                    return (True, 1 if self.simplephysics else 0)
+                elif value == "0":
+                    self.simplephysics = False
+                    return (True, None)
+                elif value == "1":
+                    self.simplephysics = True
+                    return (True, None)
+                else:
+                    return (False, None)
+            else:
+                return (False, None)
+        else:
+            return None
+    
 
 
 if __name__ == "__main__":

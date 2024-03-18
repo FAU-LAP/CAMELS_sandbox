@@ -27,8 +27,8 @@ def is_arm():
 class SandboxForCAMELS(BaseHTTPRequestHandler):
     # Setup experiment
     arm = is_arm()
-    heater1 = heater.heater(simplephysics=arm)
-    diode1 = diode.diode(simplephysics=arm)
+    heater1 = heater.heater("heater", simplephysics=arm)
+    diode1 = diode.diode("diode", simplephysics=arm)
 
     # Setup instruments
     smu1 = smu.smu("smu_heater", heater1)
@@ -61,6 +61,8 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
                 SandboxForCAMELS.smu1,
                 SandboxForCAMELS.smu2,
                 SandboxForCAMELS.dmm1,
+                SandboxForCAMELS.heater1,
+                SandboxForCAMELS.diode1
             ]:
                 result = instrument.execute_command(command, value)
                 if result is not None:

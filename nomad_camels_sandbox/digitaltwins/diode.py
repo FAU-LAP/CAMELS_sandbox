@@ -13,6 +13,7 @@ from scipy.optimize import fsolve
 class diode:
     def __init__(
         self,
+        name: str,
         I0: float = 3.40e11,
         Egap: float = 1.12,
         n: float = 2.0,
@@ -20,6 +21,7 @@ class diode:
         temperature: float = 295,
         simplephysics: bool = False
     ):
+        self.name = name
         self.I0 = I0
         self.Egap = Egap
         self.n = n
@@ -89,6 +91,27 @@ class diode:
             )
             + self.Rs * current
         )
+    
+    
+    def execute_command(self, command: str, value):
+        command = command.split(".")
+        if command[0] == self.name:
+            if command[1] == "simplephysics":
+                if value == "":
+                    return (True, 1 if self.simplephysics else 0)
+                elif value == "0":
+                    self.simplephysics = False
+                    return (True, None)
+                elif value == "1":
+                    self.simplephysics = True
+                    return (True, None)
+                else:
+                    return (False, None)
+            else:
+                return (False, None)
+        else:
+            return None
+    
 
 
 if __name__ == "__main__":
