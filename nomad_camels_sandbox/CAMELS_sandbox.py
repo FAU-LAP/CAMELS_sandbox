@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import threading
 import platform
+from PySide6.QtCore import QThread
 
 from .digitaltwins import heater, diode, smu, dmm
 
@@ -85,34 +86,52 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
         self.wfile.write(bytes(returnvalue, "utf-8"))
 
 
-class SandboxServer:
+class ServerThread(QThread):
     def __init__(self, host, port):
+        QThread.__init__(self)
         self.host = host
         self.port = port
         self.server = HTTPServer((self.host, self.port), SandboxForCAMELS)
+
+    def run(self):
+        print("This is SandboxForCAMELS.")
+        print("Local server started http://%s:%s" % (self.host, self.port))
+        if is_arm():
+            print("Running on ARM CPU, using simplified physics")
+        self.server.serve_forever()
+
+    def stop(self):
+        self.server.shutdown()
+        self.server.server_close()
+        print("SandboxForCAMELS server stopped.")
+
+
+class SandboxServer:
+    def __init__(self, host, port):
+        self.server_thread = ServerThread(host, port)
         self.n_using_instruments = 0
 
     def add_using_instrument(self):
         self.n_using_instruments += 1
         if self.n_using_instruments == 1:
-            self.start()
+            self.server_thread.start()
 
     def remove_using_instrument(self):
         self.n_using_instruments -= 1
         if self.n_using_instruments == 0:
-            self.stop()
+            self.server_thread.stop()
 
-    def start(self):
-        print("This is SandboxForCAMELS.")
-        print("Local server started http://%s:%s" % (self.host, self.port))
-        if is_arm():
-            print("Running on ARM CPU, using simplified physics")
-        # print("Press Ctrl-C to terminate")
-        self.server_thread = threading.Thread(target=self.server.serve_forever)
-        self.server_thread.start()
+    # def start(self):
+    #     print("This is SandboxForCAMELS.")
+    #     print("Local server started http://%s:%s" % (self.host, self.port))
+    #     if is_arm():
+    #         print("Running on ARM CPU, using simplified physics")
+    #     # print("Press Ctrl-C to terminate")
+    #     self.server_thread = threading.Thread(target=self.server.serve_forever)
+    #     self.server_thread.start()
 
-    def stop(self):
-        self.server.shutdown()
-        self.server_thread.join()  # Wait for the server thread to finish
-        self.server.server_close()
-        print("SandboxForCAMELS server stopped.")
+    # def stop(self):
+    #     self.server.shutdown()
+    #     self.server_thread.join()  # Wait for the server thread to finish
+    #     self.server.server_close()
+    #     print("SandboxForCAMELS server stopped.")
