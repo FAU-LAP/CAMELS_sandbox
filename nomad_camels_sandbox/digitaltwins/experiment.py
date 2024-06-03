@@ -5,10 +5,14 @@ Created on Mon Mar 11 17:45:38 2024
 @author: Michael Krieger (lapmk)
 """
 
+import json
 from . import heater, diode, semiconductor_resistor, smu, dmm
 
 
 class experiment:
+    experiments = ['diode_on_heater', 
+                   'semiconductor_resistor_on_heater']
+    
     def __init__(self, name: str, experiment: str = 'diode_on_heater'):
         self.name = name
         self.experiment = experiment
@@ -16,11 +20,9 @@ class experiment:
 
     def setup(self, experiment: str):
         self.experiment = experiment
-        if experiment == 'diode_on_heater':
-            self.setup_diode_on_heater()
-            return True
-        elif experiment == 'semiconductor_resistor_on_heater':
-            self.setup_semiconductor_resistor_on_heater()
+        if experiment in self.experiments:
+            func = getattr(self, 'setup_'+experiment)
+            func()
             return True
         else:
             return False
@@ -69,6 +71,8 @@ class experiment:
                     return (True, self.experiment)
                 else:
                     return (self.setup(value), None)
+            elif command.split(".")[1] == "list_experiments":
+                return (True, json.dumps(self.experiments))
             else:
                 return (False, None)
         else:
