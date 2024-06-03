@@ -11,7 +11,8 @@ from urllib.parse import parse_qs
 # import platform
 from PySide6.QtCore import QThread
 
-from .digitaltwins import heater, diode, smu, dmm
+# from .digitaltwins import heater, diode, semiconductor_resistor, smu, dmm
+from .digitaltwins import experiment
 
 
 # def is_arm():
@@ -24,17 +25,19 @@ from .digitaltwins import heater, diode, smu, dmm
 
 
 class SandboxForCAMELS(BaseHTTPRequestHandler):
-    # Setup experiment
-    # arm = is_arm()
-    # heater1 = heater.heater("heater", simplephysics=arm)
-    # diode1 = diode.diode("diode", simplephysics=arm)
-    heater1 = heater.heater("heater")
-    diode1 = diode.diode("diode")
+    # # Setup experiment
+    # # arm = is_arm()
+    # # heater1 = heater.heater("heater", simplephysics=arm)
+    # # diode1 = diode.diode("diode", simplephysics=arm)
+    # heater1 = heater.heater("heater")
+    # diode1 = diode.diode("diode")
+    # semiconductor_resistor1 = semiconductor_resistor.semiconductor_resistor('semiconductor_resistor')
 
-    # Setup instruments
-    smu1 = smu.smu("smu_heater", heater1)
-    dmm1 = dmm.dmm("dmm_pt1000", heater1)
-    smu2 = smu.smu("smu_diode", diode1)
+    # # Setup instruments
+    # smu1 = smu.smu("smu_heater", heater1)
+    # dmm1 = dmm.dmm("dmm_pt1000", heater1)
+    # smu2 = smu.smu("smu_sample", diode1)
+    experiment1 = experiment.experiment('experiment')
 
     def log_message(self, format, *args):
         return
@@ -49,28 +52,38 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
             returnvalue = "This is SandboxForCAMELS."
             # print("Send hello!")
         elif len(params) == 1:
-            command = list(params.keys())[0]
-            value = params[command][0]
-            # print("Execute: " + command + " = " + value)
             returncode = 400
-            # Set experiment to current temperature
-            SandboxForCAMELS.diode1.set_temperature(
-                SandboxForCAMELS.heater1.get_temperature()
-            )
-            # Execute commands
-            for instrument in [
-                SandboxForCAMELS.smu1,
-                SandboxForCAMELS.smu2,
-                SandboxForCAMELS.dmm1,
-                SandboxForCAMELS.heater1,
-                SandboxForCAMELS.diode1
-            ]:
-                result = instrument.execute_command(command, value)
+            command = list(params.keys())[0]
+            if '.' in command:
+                value = params[command][0]
+                # print("Execute: " + command + " = " + value)
+                
+                result = SandboxForCAMELS.experiment1.execute_command(command, value)
                 if result is not None:
                     if result[0] == True:
                         returncode = 200
                         if result[1] is not None:
                             returnvalue = str(result[1])
+                
+                # # Set experiment to current temperature
+                # SandboxForCAMELS.diode1.set_temperature(
+                #     SandboxForCAMELS.heater1.get_temperature()
+                # )
+                # # Execute commands
+                # for instrument in [
+                #     SandboxForCAMELS.smu1,
+                #     SandboxForCAMELS.smu2,
+                #     SandboxForCAMELS.dmm1,
+                #     SandboxForCAMELS.heater1,
+                #     SandboxForCAMELS.diode1,
+                #     SandboxForCAMELS.semiconductor_resistor1
+                # ]:
+                #     result = instrument.execute_command(command, value)
+                #     if result is not None:
+                #         if result[0] == True:
+                #             returncode = 200
+                #             if result[1] is not None:
+                #                 returnvalue = str(result[1])
         else:
             # print("Two many commands received; please send only one.")
             returncode = 400
