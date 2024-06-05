@@ -6,6 +6,7 @@ Created on Tue Mar 12 11:11:55 2024
 """
 
 import time
+import numpy as np
 
 
 def is_float(string):
@@ -42,6 +43,10 @@ class smu:
             return self.voltage
         else:
             voltage = self.device.get_voltage()
+            for m_ran in [1e-3, 1e-2, 1e-1, 1, 10]:
+                if np.abs(voltage) < m_ran:
+                    voltage += np.random.normal(0, m_ran * 1e-3 / self.NPLC)
+                    break
             if voltage > self.compliance:
                 return self.compliance
             else:
@@ -53,6 +58,10 @@ class smu:
             return self.current
         else:
             current = self.device.get_current()
+            for m_ran in [1e-3, 1e-2, 1e-1, 1, 10]:
+                if np.abs(current) < m_ran:
+                    current += np.random.normal(0, m_ran * 1e-3 / self.NPLC)
+                    break
             if current > self.compliance:
                 return self.compliance
             else:

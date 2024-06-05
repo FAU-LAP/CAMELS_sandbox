@@ -8,12 +8,14 @@ Created on Wed Mar  6 15:03:22 2024
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
+
 # import platform
 from PySide6.QtCore import QThread
 
 # from .digitaltwins import heater, diode, semiconductor_resistor, smu, dmm
 from .digitaltwins import experiment
 
+import time
 
 # def is_arm():
 #     try:
@@ -37,7 +39,7 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
     # smu1 = smu.smu("smu_heater", heater1)
     # dmm1 = dmm.dmm("dmm_pt1000", heater1)
     # smu2 = smu.smu("smu_sample", diode1)
-    experiment1 = experiment.experiment('experiment')
+    experiment1 = experiment.experiment("experiment")
 
     def log_message(self, format, *args):
         return
@@ -54,17 +56,17 @@ class SandboxForCAMELS(BaseHTTPRequestHandler):
         elif len(params) == 1:
             returncode = 400
             command = list(params.keys())[0]
-            if '.' in command:
+            if "." in command:
                 value = params[command][0]
                 # print("Execute: " + command + " = " + value)
-                
+
                 result = SandboxForCAMELS.experiment1.execute_command(command, value)
                 if result is not None:
                     if result[0] == True:
                         returncode = 200
                         if result[1] is not None:
                             returnvalue = str(result[1])
-                
+
                 # # Set experiment to current temperature
                 # SandboxForCAMELS.diode1.set_temperature(
                 #     SandboxForCAMELS.heater1.get_temperature()
@@ -117,6 +119,8 @@ class ServerThread(QThread):
         self.server.serve_forever()
 
     def stop(self):
+        # wait for 5 seconds to prevent errors if something still tries to connect
+        time.sleep(5)
         self.server.shutdown()
         self.server.server_close()
         print("SandboxForCAMELS server stopped.")

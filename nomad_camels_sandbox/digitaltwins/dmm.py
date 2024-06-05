@@ -6,6 +6,7 @@ Created on Tue Mar 12 11:11:55 2024
 """
 
 import time
+import numpy as np
 
 
 def is_float(string):
@@ -24,15 +25,15 @@ class dmm:
 
     def get_voltage(self):
         time.sleep(self.NPLC * 0.02)
-        return self.device.get_voltage()
+        return self.device.get_voltage() + np.random.normal(0, 0.001 / self.NPLC)
 
     def get_current(self):
         time.sleep(self.NPLC * 0.02)
-        return self.device.get_current()
+        return self.device.get_current() + np.random.normal(0, 0.001 / self.NPLC)
 
     def get_resistance(self):
         time.sleep(self.NPLC * 0.02)
-        return self.device.get_resistance()
+        return self.device.get_resistance() + np.random.normal(0, 0.01 / self.NPLC)
 
     def set_nplc(self, value):
         self.NPLC = value
